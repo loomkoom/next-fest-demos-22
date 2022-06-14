@@ -38,10 +38,11 @@ def changes(x):
                 if ('extended' in app.keys()) and ('demoofappid' in app['extended'].keys()):
                     parent = int(app['extended']['demoofappid'])
                     print(appid, app['common']['name'], parent)
-                    if parent in event_dict.keys() and appid not in event_demos:
-                        demo = check_event(parent)
-                        if demo:
-                            add_demo(appid)
+                    if parent in event_dict.keys():
+                        if appid not in event_demos:
+                            demo = check_event(parent)
+                            if demo:
+                                add_demo(appid)
         with open('changelist.txt', 'w') as file:
             file.write(str(changenumber))
     time.sleep(5)
