@@ -1,0 +1,126 @@
+import json
+import time
+
+import keyboard
+import requests
+from steam.client import SteamClient
+from steam.enums.emsg import EMsg
+
+client = SteamClient()
+client.login(username='loomkoom', password='3XmUdrxPZkY5', login_key="xhn6jMO8Qnlue1XO7Co")
+
+
+@client.on(EMsg.ClientLogon)
+def logon():
+    print("logged on")
+
+
+@client.on(EMsg.ClientNewLoginKey)
+def loginkey(key):
+    print(key)
+
+
+def try_all(method):
+    with open("event_demos.txt", "r") as file:
+        lines = file.readlines()
+        demos = [list(map(lambda y: y.strip(), lines[x:x + 30])) for x in range(0, len(lines), 30)]
+
+    time.sleep(1)
+    for i, batch in enumerate(demos[::-1]):
+        print(f"{i}/{len(demos) - 1}")
+        add_game(batch, method)
+    if method == 'ASF':
+        type_txt(f'reset ASF', 1)
+
+
+def type_txt(txt, delay):
+    keyboard.write(txt, delay=0)
+    keyboard.press('Enter')
+    time.sleep(delay)
+    keyboard.write('clear')
+    keyboard.press('Enter')
+
+
+def add_game(appid, method):
+    if method == 'ASF':
+        if isinstance(appid, int):
+            type_txt(f'addlicense ASF a/{appid}', .5)
+            type_txt(f'play ASF {appid}', .5)
+        else:
+            type_txt(f'addlicense ASF a/{", a/".join(appid)}', .5)
+            type_txt(f'play ASF {",".join(appid)}', .5)
+        type_txt(f'reset ASF', .5)
+    else:
+        if not isinstance(appid, int):
+            appids = list(map(int, appid))
+        else:
+            appids = [appid]
+        client.request_free_license(appids)
+        client.games_played(appids)
+        time.sleep(1)
+        client.disconnect()
+        client.reconnect()
+
+
+def loop(method, delay):
+    with open("event_apps.txt", "r") as file:
+        event_apps = list(map(lambda x: int(x.strip()), file.readlines()))
+    with open("event_demos.txt", "r") as file:
+        demos = list(map(lambda x: int(x.strip()), file.readlines()))
+    with open('event.json', 'r') as file:
+        event = json.load(file, object_hook=(lambda x: {int(k): v for k, v in x.items()}))
+
+    headers = {
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+        'Accept-Encoding': 'gzip, deflate',
+        'Accept-Language': 'en-US,en;q=0.9,nl;q=0.8',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'Dnt': '1',
+        'Sec-Gpc': '1',
+        'Upgrade-Insecure-Requests': '1',
+        'referer': 'https://store.steampowered.com/sale/nextfest',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.136 Safari/537.36'
+    }
+
+    total = len(event_apps)
+    print(f'total: {total}\n'
+          f'missing: {len(list(filter(lambda x: x == 0, event.values())))}\n'
+          f'known: {len(list(filter(lambda x: x != 0, event.values())))}')
+    while True:
+        i = 0
+        for i, app in enumerate(event_apps):
+            # print(f" {i}/{len(event_apps) - 1}", end='\r')
+            if app not in event or event[app] == 0:
+                event[app] = 0
+                req = requests.get(f'https://store.steampowered.com/saleaction/ajaxgetdemoevents?appids[]={app}',
+                                   headers=headers).json()
+                i += 1
+                print(i)
+                time.sleep(0.25)
+                if not req['success']:
+                    print('error on ', app)
+                elif len(req.keys()) > 1 and req['info'][0]['demo_appid'] != 0:
+                    demo_appid = req['info'][0]['demo_appid']
+                    event[app] = demo_appid
+                    if demo_appid not in demos:
+                        print(req)
+                        event_apps.remove(app)
+                        demos.append(demo_appid)
+                        with open('event_demos.txt', 'a', encoding='utf8') as file:
+                            file.write(f"{demo_appid}\n")
+                        add_game(demo_appid, method)
+                        print(len(demos))
+        with open('event.json', 'w') as file:
+            json.dump(event, file)
+        print(f'rechecking in {delay // 60} min')
+        time.sleep(delay)
+
+
+if __name__ == '__main__':
+    try:
+        # try_all('ASF')
+        loop('IDLE', 900)
+        client.run_forever()
+    except KeyboardInterrupt:
+        exit(0)
