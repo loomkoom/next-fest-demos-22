@@ -68,7 +68,7 @@ def add_game(appid):
     client.request_free_license(appids)
     client.games_played(appids)
     print(client.current_games_played)
-    time.sleep(3)
+    time.sleep(2)
     print(client.current_games_played)
 
 
