@@ -1,12 +1,8 @@
 import json
 import time
 
+import keyboard
 import requests
-from steam.client import SteamClient
-from steam.enums.emsg import EMsg
-
-client = SteamClient()
-changenumber = int(open('changelist.txt', 'r').read().strip())
 
 with open("event_apps.txt", "r") as file:
     event_apps = list(map(lambda x: int(x.strip()), file.readlines()))
@@ -14,18 +10,6 @@ with open("event_demos.txt", "r") as file:
     event_demos = list(map(lambda x: int(x.strip()), file.readlines()))
 with open('event.json', 'r') as file:
     event_dict = json.load(file, object_hook=(lambda x: {int(k): v for k, v in x.items()}))
-
-
-@client.on('logged_on')
-def logon():
-    print("Logged on as: ", client.user.name)
-
-
-@client.on(EMsg.ClientNewLoginKey)
-def loginkey(key):
-    print(key.body.login_key)
-    with open('key.txt', 'w') as keyfile:
-        keyfile.write(key.body.login_key)
 
 
 def try_all(in_file):
@@ -39,16 +23,22 @@ def try_all(in_file):
         add_game(batch)
 
 
+def type_txt(txt, delay):
+    keyboard.write(txt, delay=0)
+    keyboard.press('Enter')
+    time.sleep(delay)
+    keyboard.write('clear')
+    keyboard.press('Enter')
+
+
 def add_game(appid):
-    if not isinstance(appid, int):
-        appids = list(map(int, appid))
+    if isinstance(appid, int):
+        type_txt(f'addlicense ASF a/{appid}', .5)
+        type_txt(f'play ASF {appid}', .5)
     else:
-        appids = [appid]
-    client.request_free_license(appids)
-    client.games_played(appids)
-    print(client.current_games_played)
-    time.sleep(3)
-    print(client.current_games_played)
+        type_txt(f'addlicense ASF a/{", a/".join(appid)}', 2)
+        type_txt(f'play ASF {",".join(appid)}', 2)
+    type_txt(f'reset ASF', 1)
 
 
 def check_event(parent_app):
@@ -107,10 +97,8 @@ def loop(delay):
 
 if __name__ == '__main__':
     try:
-        # try_all('event_demos.txt')
-        client.cli_login(username='loomkoom', password='3XmUdrxPZkY5')
-        loop(900)
+        time.sleep(2)
+        try_all('appids.txt')
+    #    loop(900)
     except KeyboardInterrupt:
-        if client.connected:
-            client.logout()
         exit(0)
