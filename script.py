@@ -38,26 +38,15 @@ def changes(x):
                 if ('extended' in app.keys()) and ('demoofappid' in app['extended'].keys()):
                     parent = int(app['extended']['demoofappid'])
                     print(appid, app['common']['name'], parent)
-                    if parent in event_dict.keys():
-                        if appid not in event_demos:
-                            add_demo(appid)
-                            if check_event(parent):
-                                event_dict[parent] = appid
+                    if (parent in event_dict.keys()) and (appid not in event_demos):
+                        add_demo(appid)
+                        event_dict[parent] = appid
+                        event_demos.append(appid)
+
         with open('changelist.txt', 'w') as file:
             file.write(str(changenumber))
     time.sleep(5)
     client.get_changes_since(x.body.current_change_number)
-
-
-def try_all(in_file):
-    with open(in_file, "r") as file:
-        lines = file.readlines()
-        demos = [list(map(lambda y: y.strip(), lines[x:x + 30])) for x in range(0, len(lines), 30)]
-
-    time.sleep(1)
-    for i, batch in enumerate(demos[::-1]):
-        print(f"{i}/{len(demos) - 1}")
-        add_game(batch)
 
 
 def add_game(appid):
@@ -70,6 +59,24 @@ def add_game(appid):
     print(client.current_games_played)
     time.sleep(2)
     print(client.current_games_played)
+
+
+def add_demo(appid):
+    with open('event_demos.txt', 'a', encoding='utf8') as file:
+        file.write(f"{appid}\n")
+    add_game(appid)
+    print(f"New demo: {appid}, total is now: {len(event_demos)}")
+
+
+def try_all(in_file):
+    with open(in_file, "r") as file:
+        lines = file.readlines()
+        demos = [list(map(lambda y: y.strip(), lines[x:x + 30])) for x in range(0, len(lines), 30)]
+
+    time.sleep(1)
+    for i, batch in enumerate(demos[::-1]):
+        print(f"{i}/{len(demos) - 1}")
+        add_game(batch)
 
 
 def check_event(parent_app):
@@ -88,7 +95,7 @@ def check_event(parent_app):
         }
         req = session.get(f'https://store.steampowered.com/saleaction/ajaxgetdemoevents?appids[]={parent_app}',
                           headers=headers).json()
-        time.sleep(.5)
+        time.sleep(.25)
         if not req['success']:
             print('error on ', parent_app)
         elif len(req.keys()) > 1 and req['info'][0]['demo_appid'] != 0:
@@ -99,13 +106,6 @@ def check_event(parent_app):
                 print(req)
                 return demo_appid
         return False
-
-
-def add_demo(appid):
-    with open('event_demos.txt', 'a', encoding='utf8') as file:
-        file.write(f"{appid}\n")
-    add_game(appid)
-    print(len(event_demos))
 
 
 def loop(delay):
@@ -138,7 +138,6 @@ if __name__ == '__main__':
             event_dict = json.load(file, object_hook=(lambda x: {int(k): v for k, v in x.items()}))
         changenumber = int(open('changelist.txt', 'r').read().strip())
 
-        # try_all('event_demos.txt')
         steamkey = open('key.txt').read().strip()
         if steamkey:
             client.login(username='loomkoom', password='3XmUdrxPZkY5', login_key=steamkey)
@@ -146,6 +145,7 @@ if __name__ == '__main__':
             client.cli_login(username='loomkoom', password='3XmUdrxPZkY5')
 
         client.run_forever()
+        # try_all('event_demos.txt')
         # loop(900)
     except KeyboardInterrupt:
         if client.connected:
