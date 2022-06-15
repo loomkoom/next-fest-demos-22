@@ -37,7 +37,7 @@ def handle_disconnect():
     print("Disconnected.")
     if client.relogin_available:
         print("Trying to reconnect...")
-        client.reconnect(maxdelay=30)
+        client.reconnect(maxdelay=15)
 
 
 @client.on("reconnect")
@@ -108,7 +108,7 @@ def changes(resp):
         config['change_number'] = change_number
         save_config()
     time.sleep(5)
-    client.get_changes_since(x.body.current_change_number)
+    client.get_changes_since(current_change)
 
 
 def add_game(appid):
