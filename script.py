@@ -79,11 +79,15 @@ def loginkey(key):
         save_config()
 
 
-@client.on(EMsg.ClientPICSChangesSinceResponse)
+@client.on(EMsg.ClientPICS)
 def changes(resp):
     global change_number
     current_change = resp.body.current_change_number
-    if current_change > change_number:
+    if current_change == change_number:
+        print('--------------------------------------')
+        time.sleep(5)
+        client.get_changes_since(current_change)
+    else:
         change_number = current_change
         app_changes = resp.body.app_changes
         if len(app_changes) > 0:
@@ -108,9 +112,7 @@ def changes(resp):
                     dump_event_dict()
         config['change_number'] = change_number
         save_config()
-    print('--------------------------------------')
-    time.sleep(5)
-    client.get_changes_since(current_change)
+        client.get_changes_since(current_change)
 
 
 def add_game(appid):
