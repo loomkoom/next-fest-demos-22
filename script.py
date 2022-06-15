@@ -3,8 +3,8 @@ import time
 
 import requests
 from steam.client import SteamClient
-from steam.enums.emsg import EMsg
 from steam.enums.common import EResult
+from steam.enums.emsg import EMsg
 
 client = SteamClient()
 client.set_credential_location(".")
@@ -13,6 +13,7 @@ client.set_credential_location(".")
 def save_config():
     with open('config.json', 'w') as file:
         json.dump(config, file)
+
 
 def dump_event_dict():
     with open('event.json', 'w') as file:
@@ -55,7 +56,7 @@ def handle_error(result):
     if result == EResult.InvalidPassword:
         config['login_key'] = ''
         save_config()
-        client.login(username=username,password=password)
+        client.login(username=username, password=password)
     print("error occurred: ", repr(result))
 
 
@@ -186,10 +187,10 @@ if __name__ == '__main__':
         with open('event.json', 'r') as file:
             event_dict = json.load(file, object_hook=(lambda x: {int(k): v for k, v in x.items()}))
         if len(event_apps) != event_dict.keys():
-            event_dict.update({event_apps[i]: 0 for i in range(len(event_apps))})
+            event_dict.update({event_apps[i]: 0 for i in set(event_dict.keys()).symmetric_difference(set(event_apps))})
             dump_event_dict()
         print(len(event_dict))
-        event_demos = list(filter(lambda y: y != 0, set(event_dict.values()).symmetric_difference(set(event_apps))))
+        event_demos = list(filter(lambda y: y != 0, event_dict.values()))
 
         with open('config.json', 'r') as file:
             config = json.load(file)
