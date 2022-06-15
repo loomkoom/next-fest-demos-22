@@ -94,13 +94,13 @@ def check_event(parent_app):
         demo_appid = req['info'][0]['demo_appid']
         event_dict[parent_app] = demo_appid
         if demo_appid not in event_demos:
+	    event_demos.append(appid)
             print(req)
             return demo_appid
     return False
 
 
 def add_demo(appid):
-    event_demos.append(appid)
     with open('event_demos.txt', 'a', encoding='utf8') as file:
         file.write(f"{appid}\n")
     add_game(appid)
