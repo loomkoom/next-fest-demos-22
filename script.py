@@ -6,27 +6,67 @@ from steam.client import SteamClient
 from steam.enums.emsg import EMsg
 
 client = SteamClient()
+client.set_credential_location(".")
+
+
+def save_config():
+    with open('config.json', 'w') as file:
+        json.dump(config, file)
 
 
 @client.on('logged_on')
 def logon():
     time.sleep(1)
-    client.get_changes_since(changenumber)
+    client.get_changes_since(change_number)
     print("Logged on as: ", client.user.name)
+
+
+@client.on("connected")
+def handle_connected():
+    print("Connected to: ", client.current_server_addr)
+
+
+@client.on("disconnected")
+def handle_disconnect():
+    print("Disconnected.")
+    if client.relogin_available:
+        print("Trying to reconnect...")
+        client.reconnect(maxdelay=30)
+
+
+@client.on("reconnect")
+def handle_reconnect(delay):
+    print(f"Reconnect in {delay} ...")
+
+
+@client.on("error")
+def handle_error(result):
+    print("error occurred: ", repr(result))
+
+
+@client.on('auth_code_required')
+def auth_code_prompt(is_2fa, mismatch):
+    if is_2fa:
+        code = input("Enter 2FA Code: ")
+        client.login(two_factor_code=code, username=username, password=password)
+    else:
+        code = input("Enter Email Code: ")
+        client.login(auth_code=code, username=username, password=password)
 
 
 @client.on(EMsg.ClientNewLoginKey)
 def loginkey(key):
-    print(key.body.login_key)
-    with open('key.txt', 'w') as keyfile:
-        keyfile.write(key.body.login_key)
+    if key.body.login_key != config['login_key']:
+        print(key.body.login_key)
+        config['login_key'] = key.body.login_key
+        save_config()
 
 
 @client.on(EMsg.ClientPICSChangesSinceResponse)
 def changes(x):
-    global changenumber
-    if x.body.current_change_number - changenumber > 0:
-        changenumber = x.body.current_change_number
+    global change_number
+    if x.body.current_change_number - change_number > 0:
+        change_number = x.body.current_change_number
         if len(x.body.app_changes) > 0:
             print('--------------------------------------')
             print('since: ', x.body.since_change_number)
@@ -42,9 +82,8 @@ def changes(x):
                         add_demo(appid)
                         event_dict[parent] = appid
                         event_demos.append(appid)
-
-        with open('changelist.txt', 'w') as file:
-            file.write(str(changenumber))
+        config['change_number'] = change_number
+        save_config()
     time.sleep(5)
     client.get_changes_since(x.body.current_change_number)
 
@@ -136,13 +175,14 @@ if __name__ == '__main__':
             event_demos = list(map(lambda x: int(x.strip()), file.readlines()))
         with open('event.json', 'r') as file:
             event_dict = json.load(file, object_hook=(lambda x: {int(k): v for k, v in x.items()}))
-        changenumber = int(open('changelist.txt', 'r').read().strip())
+        with open('config.json', 'r') as file:
+            config = json.load(file)
+        change_number = config['change_number']
+        login_key = config['login_key']
+        username = config['username']
+        password = config['password']
 
-        steamkey = open('key.txt').read().strip()
-        if steamkey:
-            client.login(username='loomkoom', password='3XmUdrxPZkY5', login_key=steamkey)
-        else:
-            client.cli_login(username='loomkoom', password='3XmUdrxPZkY5')
+        client.login(username=username, password=password, login_key=login_key)
 
         client.run_forever()
         # try_all('event_demos.txt')
