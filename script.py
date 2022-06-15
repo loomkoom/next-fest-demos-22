@@ -164,7 +164,7 @@ def check_event(parent_app):
         return False
 
 
-def populate_dict(delay):
+def populate_dict():
     total = len(event_apps)
     print(f'total apps: {total}\n'
           f'missing demos: {len(list(filter(lambda x: x == 0, event_dict.values())))}\n'
@@ -189,7 +189,9 @@ if __name__ == '__main__':
         if len(event_apps) != event_dict.keys():
             event_dict.update({app: 0 for app in set(event_dict.keys()).symmetric_difference(set(event_apps))})
             dump_event_dict()
+        populate_dict()
         event_demos = list(filter(lambda y: y != 0, event_dict.values()))
+
         print(f"total apps: {len(event_dict)}\n"
               f"total demos: {len(event_demos)}")
 
@@ -204,7 +206,6 @@ if __name__ == '__main__':
         client.run_forever()
 
         # try_all('event_demos.txt')
-        # populate_dict()
     except KeyboardInterrupt:
         if client.connected:
             client.logout()
