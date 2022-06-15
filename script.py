@@ -92,6 +92,7 @@ def changes(resp):
             print(app_changes)
             appids = [app.appid for app in app_changes]
             ret = client.get_product_info(apps=appids, auto_access_tokens=True)
+            print('\n',ret)
             for appid in appids:
                 app = ret['apps'][appid]
                 try:
