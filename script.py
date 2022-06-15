@@ -38,7 +38,7 @@ def handle_disconnect():
     print("Disconnected.")
     if client.relogin_available:
         print("Trying to reconnect...")
-        client.reconnect(maxdelay=15)
+        client.reconnect(maxdelay=30, retry=3)
 
 
 @client.on("reconnect")
