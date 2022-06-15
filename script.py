@@ -79,7 +79,7 @@ def loginkey(key):
         save_config()
 
 
-@client.on(EMsg.ClientPICS)
+@client.on(EMsg.ClientPICSChangesSinceResponse)
 def changes(resp):
     global change_number
     current_change = resp.body.current_change_number
