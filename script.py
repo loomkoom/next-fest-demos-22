@@ -25,6 +25,7 @@ def logon():
     time.sleep(1)
     client.get_changes_since(change_number)
     print("Logged on as: ", client.user.name)
+    print('--------------------------------------')
 
 
 @client.on("connected")
@@ -86,7 +87,6 @@ def changes(resp):
         change_number = current_change
         app_changes = resp.body.app_changes
         if len(app_changes) > 0:
-            print('--------------------------------------')
             print('since: ', resp.body.since_change_number)
             print('current: ', change_number)
             # print(app_changes)
@@ -108,6 +108,7 @@ def changes(resp):
                     dump_event_dict()
         config['change_number'] = change_number
         save_config()
+    print('--------------------------------------')
     time.sleep(5)
     client.get_changes_since(current_change)
 
