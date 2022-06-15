@@ -189,8 +189,9 @@ if __name__ == '__main__':
         if len(event_apps) != event_dict.keys():
             event_dict.update({event_apps[i]: 0 for i in set(event_dict.keys()).symmetric_difference(set(event_apps))})
             dump_event_dict()
-        print(len(event_dict))
         event_demos = list(filter(lambda y: y != 0, event_dict.values()))
+        print(f"total apps: {len(event_dict)}\n"
+              f"total demos: {len(event_demos)}")
 
         with open('config.json', 'r') as file:
             config = json.load(file)
