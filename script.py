@@ -210,8 +210,10 @@ if __name__ == '__main__':
         login_key = config['login_key']
         username = config['username']
         password = config['password']
-
-        client.login(username=username, password=password, login_key=login_key)
+        if client.relogin_available:
+            client.relogin()
+        else:
+            client.login(username=username, password=password, login_key=login_key)
         client.run_forever()
 
         # try_all('event_demos.txt')
