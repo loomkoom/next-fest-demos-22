@@ -135,8 +135,12 @@ if __name__ == '__main__':
         changenumber = int(open('changelist.txt', 'r').read().strip())
 
         # try_all('event_demos.txt')
-        client.cli_login(username='loomkoom', password='3XmUdrxPZkY5')
-        # client.login(username='loomkoom', password='3XmUdrxPZkY5', login_key="GFhZc2L6AHywOjX/cq8")
+        steamkey = open('key.txt').read().strip()
+        if steamkey:
+            client.login(username='loomkoom', password='3XmUdrxPZkY5', login_key=steamkey)
+        else:
+           client.cli_login(username='loomkoom', password='3XmUdrxPZkY5')
+
         client.run_forever()
         # loop(900)
     except KeyboardInterrupt:
