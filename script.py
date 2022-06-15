@@ -11,7 +11,7 @@ client = SteamClient()
 @client.on('logged_on')
 def logon():
     time.sleep(1)
-    #   client.get_changes_since(changenumber)
+    client.get_changes_since(changenumber)
     print("Logged on as: ", client.user.name)
 
 
@@ -39,7 +39,6 @@ def changes(x):
                     parent = int(app['extended']['demoofappid'])
                     print(appid, app['common']['name'], parent)
                     if parent in event_dict.keys():
-                        add_game(appid)
                         if appid not in event_demos:
                             add_demo(appid)
                             if check_event(parent):
@@ -146,8 +145,8 @@ if __name__ == '__main__':
         else:
             client.cli_login(username='loomkoom', password='3XmUdrxPZkY5')
 
-        # client.run_forever()
-        loop(900)
+        client.run_forever()
+        # loop(900)
     except KeyboardInterrupt:
         if client.connected:
             client.logout()
