@@ -39,8 +39,11 @@ def changes(x):
                     parent = int(app['extended']['demoofappid'])
                     print(appid, app['common']['name'], parent)
                     if parent in event_dict.keys():
+                        add_game(appid)
                         if appid not in event_demos:
                             add_demo(appid)
+                            if check_event(parent):
+                                event_dict[parent] = appid
         with open('changelist.txt', 'w') as file:
             file.write(str(changenumber))
     time.sleep(5)
