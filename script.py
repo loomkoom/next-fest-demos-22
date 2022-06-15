@@ -153,24 +153,21 @@ def check_event(parent_app):
         return False
 
 
-def loop(delay):
+def populate_dict(delay):
     total = len(event_apps)
     print(f'total apps: {total}\n'
           f'missing demos: {len(list(filter(lambda x: x == 0, event_dict.values())))}\n'
           f'known demos: {len(list(filter(lambda x: x != 0, event_dict.values())))}')
-    while True:
-        for i, app in enumerate(event_apps):
-            print(f" {i}/{len(event_apps) - 1}", end='\r')
-            if app not in event_dict or event_dict[app] == 0:
-                event_dict[app] = 0
-                demo = check_event(app)
-                if demo:
-                    add_demo(demo)
+    for i, app in enumerate(event_apps):
+        print(f" {i}/{len(event_apps) - 1}", end='\r')
+        if app not in event_dict or event_dict[app] == 0:
+            event_dict[app] = 0
+            demo = check_event(app)
+            if demo:
+                add_demo(demo)
 
-        with open('event.json', 'w') as file:
-            json.dump(event_dict, file)
-        print(f'rechecking in {delay // 60} min')
-        time.sleep(delay)
+    with open('event.json', 'w') as file:
+        json.dump(event_dict, file)
 
 
 if __name__ == '__main__':
@@ -182,7 +179,7 @@ if __name__ == '__main__':
         if len(event_apps) != event_dict.keys():
             event_dict.update({event_apps[i]: 0 for i in range(len(event_apps))})
         print(len(event_dict))
-        event_demos = list(filter(lambda x: x != 0,event_dict.values()))
+        event_demos = list(filter(lambda x: x != 0, event_dict.values()))
 
         with open('config.json', 'r') as file:
             config = json.load(file)
@@ -195,7 +192,7 @@ if __name__ == '__main__':
         client.run_forever()
 
         # try_all('event_demos.txt')
-        # loop(900)
+        # populate_dict()
     except KeyboardInterrupt:
         if client.connected:
             client.logout()
