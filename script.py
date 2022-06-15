@@ -167,8 +167,8 @@ def check_event(parent_app):
 def populate_dict():
     total = len(event_apps)
     print(f'total apps: {total}\n'
-          f'missing demos: {len(list(filter(lambda x: x == 0, event_dict.values())))}\n'
-          f'known demos: {len(list(filter(lambda x: x != 0, event_dict.values())))}')
+          f'missing demos: {len(tuple(filter(lambda x: x == 0, event_dict.values())))}\n'
+          f'known demos: {len(tuple(filter(lambda x: x != 0, event_dict.values())))}')
     for i, app in enumerate(event_apps):
         print(f" {i}/{len(event_apps) - 1}", end='\r')
         if app not in event_dict or event_dict[app] == 0:
