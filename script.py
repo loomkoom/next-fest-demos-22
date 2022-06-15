@@ -11,7 +11,7 @@ client = SteamClient()
 @client.on('logged_on')
 def logon():
     time.sleep(1)
-    client.get_changes_since(changenumber)
+    #   client.get_changes_since(changenumber)
     print("Logged on as: ", client.user.name)
 
 
@@ -74,30 +74,32 @@ def add_game(appid):
 
 
 def check_event(parent_app):
-    headers = {
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-        'Accept-Encoding': 'gzip, deflate',
-        'Accept-Language': 'en-US,en;q=0.9,nl;q=0.8',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-        'Dnt': '1',
-        'Sec-Gpc': '1',
-        'Upgrade-Insecure-Requests': '1',
-        'referer': 'https://store.steampowered.com/sale/nextfest',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.136 Safari/537.36'
-    }
-    req = requests.get(f'https://store.steampowered.com/saleaction/ajaxgetdemoevents?appids[]={parent_app}',
-                       headers=headers).json()
-    if not req['success']:
-        print('error on ', parent_app)
-    elif len(req.keys()) > 1 and req['info'][0]['demo_appid'] != 0:
-        demo_appid = req['info'][0]['demo_appid']
-        event_dict[parent_app] = demo_appid
-        if demo_appid not in event_demos:
-	    event_demos.append(appid)
-            print(req)
-            return demo_appid
-    return False
+    with requests.session() as session:
+        headers = {
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+            'Accept-Encoding': 'gzip, deflate',
+            'Accept-Language': 'en-US,en;q=0.9,nl;q=0.8',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+            'Dnt': '1',
+            'Sec-Gpc': '1',
+            'Upgrade-Insecure-Requests': '1',
+            'referer': 'https://store.steampowered.com/sale/nextfest',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.136 Safari/537.36'
+        }
+        req = session.get(f'https://store.steampowered.com/saleaction/ajaxgetdemoevents?appids[]={parent_app}',
+                          headers=headers).json()
+        time.sleep(.5)
+        if not req['success']:
+            print('error on ', parent_app)
+        elif len(req.keys()) > 1 and req['info'][0]['demo_appid'] != 0:
+            demo_appid = req['info'][0]['demo_appid']
+            event_dict[parent_app] = demo_appid
+            if demo_appid not in event_demos:
+                event_demos.append(demo_appid)
+                print(req)
+                return demo_appid
+        return False
 
 
 def add_demo(appid):
@@ -142,10 +144,10 @@ if __name__ == '__main__':
         if steamkey:
             client.login(username='loomkoom', password='3XmUdrxPZkY5', login_key=steamkey)
         else:
-           client.cli_login(username='loomkoom', password='3XmUdrxPZkY5')
+            client.cli_login(username='loomkoom', password='3XmUdrxPZkY5')
 
-        client.run_forever()
-        # loop(900)
+        # client.run_forever()
+        loop(900)
     except KeyboardInterrupt:
         if client.connected:
             client.logout()
