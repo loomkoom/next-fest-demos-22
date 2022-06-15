@@ -38,6 +38,7 @@ def handle_disconnect():
 def handle_reconnect(delay):
     print(f"Reconnect in {delay} ...")
 
+
 @client.on("channel_secured")
 def send_login():
     if client.relogin_available:
@@ -176,10 +177,13 @@ if __name__ == '__main__':
     try:
         with open("event_apps.txt", "r") as file:
             event_apps = list(map(lambda x: int(x.strip()), file.readlines()))
-        with open("event_demos.txt", "r") as file:
-            event_demos = list(map(lambda x: int(x.strip()), file.readlines()))
         with open('event.json', 'r') as file:
             event_dict = json.load(file, object_hook=(lambda x: {int(k): v for k, v in x.items()}))
+        if len(event_apps) != event_dict.keys():
+            event_dict.update({event_apps[i]: 0 for i in range(len(event_apps))})
+        print(len(event_dict))
+        event_demos = list(filter(lambda x: x != 0,event_dict.values()))
+
         with open('config.json', 'r') as file:
             config = json.load(file)
         change_number = config['change_number']
@@ -188,8 +192,8 @@ if __name__ == '__main__':
         password = config['password']
 
         client.login(username=username, password=password, login_key=login_key)
-
         client.run_forever()
+
         # try_all('event_demos.txt')
         # loop(900)
     except KeyboardInterrupt:
