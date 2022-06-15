@@ -38,6 +38,11 @@ def handle_disconnect():
 def handle_reconnect(delay):
     print(f"Reconnect in {delay} ...")
 
+@client.on("channel_secured")
+def send_login():
+    if client.relogin_available:
+        client.relogin()
+
 
 @client.on("error")
 def handle_error(result):
