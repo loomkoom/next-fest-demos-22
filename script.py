@@ -97,7 +97,7 @@ def changes(x):
                     if (parent in event_dict.keys()) and (appid not in event_demos):
                         add_demo(appid)
                         event_dict[parent] = appid
-                        event_demos.append(appid)
+                        event_demos.add(appid)
                         dump_event_dict()
         config['change_number'] = change_number
         save_config()
@@ -127,7 +127,7 @@ def add_demo(appid):
 def try_all(in_file):
     with open(in_file, "r") as file:
         lines = file.readlines()
-        demos = [list(map(lambda y: y.strip(), lines[x:x + 30])) for x in range(0, len(lines), 30)]
+        demos = [set(map(lambda y: y.strip(), lines[x:x + 30])) for x in range(0, len(lines), 30)]
 
     time.sleep(1)
     for i, batch in enumerate(demos[::-1]):
@@ -158,7 +158,7 @@ def check_event(parent_app):
             demo_appid = req['info'][0]['demo_appid']
             event_dict[parent_app] = demo_appid
             if demo_appid not in event_demos:
-                event_demos.append(demo_appid)
+                event_demos.add(demo_appid)
                 print(req)
                 return demo_appid
         return False
@@ -183,15 +183,15 @@ def populate_dict():
 if __name__ == '__main__':
     try:
         with open("event_apps.txt", "r") as file:
-            event_apps = list(map(lambda x: int(x.strip()), file.readlines()))
+            event_apps = set(map(lambda x: int(x.strip()), file.readlines()))
         with open('event.json', 'r') as file:
             event_dict = json.load(file, object_hook=(lambda x: {int(k): v for k, v in x.items()}))
         if len(event_apps) != event_dict.keys():
-            event_dict.update({app: 0 for app in set(event_dict.keys()).symmetric_difference(set(event_apps))})
-            event_demos = list(filter(lambda y: y != 0, event_dict.values()))
-            populate_dict()
+            event_dict.update({app: 0 for app in set(event_dict.keys()).symmetric_difference(event_apps)})
+            event_demos = set(filter(lambda y: y != 0, event_dict.values()))
+            # populate_dict()
             dump_event_dict()
-        event_demos = list(filter(lambda y: y != 0, event_dict.values()))
+        event_demos = set(filter(lambda y: y != 0, event_dict.values()))
 
         print(f"total apps: {len(event_dict)}\n"
               f"total demos: {len(event_demos)}")
