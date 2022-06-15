@@ -14,6 +14,10 @@ def save_config():
     with open('config.json', 'w') as file:
         json.dump(config, file)
 
+def dump_event_dict():
+    with open('event.json', 'w') as file:
+        json.dump(event_dict, file)
+
 
 @client.on('logged_on')
 def logon():
@@ -93,6 +97,7 @@ def changes(x):
                         add_demo(appid)
                         event_dict[parent] = appid
                         event_demos.append(appid)
+                        dump_event_dict()
         config['change_number'] = change_number
         save_config()
     time.sleep(5)
@@ -171,8 +176,7 @@ def populate_dict(delay):
             if demo:
                 add_demo(demo)
 
-    with open('event.json', 'w') as file:
-        json.dump(event_dict, file)
+    dump_event_dict()
 
 
 if __name__ == '__main__':
@@ -183,6 +187,7 @@ if __name__ == '__main__':
             event_dict = json.load(file, object_hook=(lambda x: {int(k): v for k, v in x.items()}))
         if len(event_apps) != event_dict.keys():
             event_dict.update({event_apps[i]: 0 for i in range(len(event_apps))})
+            dump_event_dict()
         print(len(event_dict))
         event_demos = list(filter(lambda y: y != 0, set(event_dict.values()).symmetric_difference(set(event_apps))))
 
