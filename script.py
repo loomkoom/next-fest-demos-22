@@ -179,8 +179,10 @@ def populate_dict():
     print(f'total apps: {total}\n'
           f'missing demos: {len(tuple(filter(lambda x: x == 0, event_dict.values())))}\n'
           f'known demos: {len(tuple(filter(lambda x: x != 0, event_dict.values())))}')
-    for i, app in enumerate(event_apps):
-        print(f" {i}/{len(event_apps) - 1}", end='\r')
+    unknown = filter(lambda app: app not in event_dict or event_dict[app] == 0, event_apps)
+    unknown_cnt = len(list(unknown))
+    for i,app in enumerate(unknown):
+        print(f" {i}/{unknown_cnt - 1}", end='\r')
         if app not in event_dict or event_dict[app] == 0:
             event_dict[app] = 0
             demo = check_event(app)
@@ -199,7 +201,7 @@ if __name__ == '__main__':
         if len(event_apps) != event_dict.keys():
             event_dict.update({app: 0 for app in set(event_dict.keys()).symmetric_difference(event_apps)})
             event_demos = set(filter(lambda y: y != 0, event_dict.values()))
-            # populate_dict()
+            populate_dict()
             dump_event_dict()
         event_demos = set(filter(lambda y: y != 0, event_dict.values()))
 
