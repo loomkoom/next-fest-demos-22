@@ -4,6 +4,7 @@ import time
 import requests
 from steam.client import SteamClient
 from steam.enums.emsg import EMsg
+from steam.enums.common import EResult
 
 client = SteamClient()
 client.set_credential_location(".")
@@ -47,6 +48,10 @@ def send_login():
 
 @client.on("error")
 def handle_error(result):
+    if result == EResult.InvalidPassword:
+        config['login_key'] = ''
+        save_config()
+        client.login(username=username,password=password)
     print("error occurred: ", repr(result))
 
 
