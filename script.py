@@ -176,13 +176,14 @@ def check_event(parent_app):
 
 def populate_dict():
     total = len(event_apps)
+    missing = len(tuple(filter(lambda app: app not in event_dict or event_dict[app] == 0, event_apps)))
+    known = len(tuple(filter(lambda x: x != 0, event_dict.values())))
     print(f'total apps: {total}\n'
-          f'missing demos: {len(tuple(filter(lambda x: x == 0, event_dict.values())))}\n'
-          f'known demos: {len(tuple(filter(lambda x: x != 0, event_dict.values())))}')
+          f'missing demos: {missing}\n'
+          f'known demos: {known}')
     unknown = filter(lambda app: app not in event_dict or event_dict[app] == 0, event_apps)
-    unknown_cnt = len(list(unknown))
-    for i,app in enumerate(unknown):
-        print(f" {i}/{unknown_cnt - 1}", end='\r')
+    for i, app in enumerate(unknown):
+        print(f" {i}/{missing - 1}", end='\r')
         if app not in event_dict or event_dict[app] == 0:
             event_dict[app] = 0
             demo = check_event(app)
