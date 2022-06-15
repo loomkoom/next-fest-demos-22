@@ -187,7 +187,7 @@ if __name__ == '__main__':
         with open('event.json', 'r') as file:
             event_dict = json.load(file, object_hook=(lambda x: {int(k): v for k, v in x.items()}))
         if len(event_apps) != event_dict.keys():
-            event_dict.update({event_apps[i]: 0 for i in set(event_dict.keys()).symmetric_difference(set(event_apps))})
+            event_dict.update({app: 0 for app in set(event_dict.keys()).symmetric_difference(set(event_apps))})
             dump_event_dict()
         event_demos = list(filter(lambda y: y != 0, event_dict.values()))
         print(f"total apps: {len(event_dict)}\n"
