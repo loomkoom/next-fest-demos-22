@@ -40,9 +40,7 @@ def changes(x):
                     print(appid, app['common']['name'], parent)
                     if parent in event_dict.keys():
                         if appid not in event_demos:
-                            demo = check_event(parent)
-                            if demo:
-                                add_demo(appid)
+                            add_demo(appid)
         with open('changelist.txt', 'w') as file:
             file.write(str(changenumber))
     time.sleep(5)
