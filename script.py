@@ -79,26 +79,32 @@ def loginkey(key):
 
 
 @client.on(EMsg.ClientPICSChangesSinceResponse)
-def changes(x):
+def changes(resp):
     global change_number
-    if x.body.current_change_number - change_number > 0:
-        change_number = x.body.current_change_number
-        if len(x.body.app_changes) > 0:
+    current_change = resp.body.current_change_number
+    if current_change > change_number:
+        change_number = current_change
+        app_changes = resp.body.app_changes
+        if len(app_changes) > 0:
             print('--------------------------------------')
-            print('since: ', x.body.since_change_number)
-            print('current: ', x.body.current_change_number)
-            appids = [app.appid for app in x.body.app_changes]
+            print('since: ', resp.body.since_change_number)
+            print('current: ', change_number)
+            print(app_changes)
+            appids = [app.appid for app in app_changes]
             ret = client.get_product_info(apps=appids, auto_access_tokens=True)
             for appid in appids:
                 app = ret['apps'][appid]
-                if ('extended' in app.keys()) and ('demoofappid' in app['extended'].keys()):
+                try:
                     parent = int(app['extended']['demoofappid'])
                     print(appid, app['common']['name'], parent)
-                    if (parent in event_dict.keys()) and (appid not in event_demos):
-                        add_demo(appid)
-                        event_dict[parent] = appid
-                        event_demos.add(appid)
-                        dump_event_dict()
+                except KeyError:
+                    continue
+
+                if (parent in event_dict) and (appid not in event_demos):
+                    add_demo(appid)
+                    event_dict[parent] = appid
+                    event_demos.add(appid)
+                    dump_event_dict()
         config['change_number'] = change_number
         save_config()
     time.sleep(5)
