@@ -84,13 +84,13 @@ def changes(resp):
     global change_number
     current_change = resp.body.current_change_number
     if current_change == change_number:
-        print('--------------------------------------')
         time.sleep(5)
         client.get_changes_since(current_change)
     else:
         change_number = current_change
         app_changes = resp.body.app_changes
         if len(app_changes) > 0:
+            print('--------------------------------------')
             print('since: ', resp.body.since_change_number)
             print('current: ', change_number)
             # print(app_changes)
