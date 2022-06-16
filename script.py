@@ -250,7 +250,7 @@ if __name__ == '__main__':
             event_dict = json.load(file, object_hook=(lambda x: {int(k): v for k, v in x.items()}))
         fetch_event_apps()
         event_demos = set(filter(lambda y: y != 0, event_dict.values()))
-        if len(sys.argv) > 0 and sys.argv[0] == 'rebuild':
+        if len(sys.argv) >= 1 and sys.argv[1] == 'rebuild':
             populate_dict()
         dump_event_dict()
         event_demos = set(filter(lambda y: y != 0, event_dict.values()))
