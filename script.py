@@ -24,6 +24,8 @@ def dump_event_dict():
 
 @client.on('logged_on')
 def logon():
+    if  client.user.name is None:
+        client.sleep(5)
     print("Logged on as: ", client.user.name)
     print('--------------------------------------')
 
