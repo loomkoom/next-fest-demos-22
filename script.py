@@ -62,8 +62,9 @@ def handle_error(result):
         config['login_key'] = ''
         save_config()
         client.login(username=username, password=password)
-    if result == EResult.RateLimitExceeded:
-        print("error occurred: ", repr(result))
+    if EResult == EResult.RateLimitExceeded:
+        print("Login failed: Ratelimit - waiting 30 min")
+        time.sleep(1850)
 
 
 @client.on('auth_code_required')
@@ -138,6 +139,7 @@ def add_game(appid):
     while True:
         if not client.connected:
             client.reconnect()
+            time.sleep(1)
             continue
 
         if not client.logged_on and client.relogin_available:
