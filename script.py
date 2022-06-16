@@ -2,12 +2,13 @@ import json
 import time
 
 import requests
-from steam.client import SteamClient
-from steam.enums.common import EResult
-from steam.enums.emsg import EMsg
+import gevent
+from steam.client import SteamClient,EMsg, EResult
 
 client = SteamClient()
 client.set_credential_location(".")
+wait = gevent.event.Event()
+playing_blocked = gevent.event.Event()
 
 
 def save_config():
@@ -31,6 +32,7 @@ def logon():
 @client.on("connected")
 def handle_connected():
     print("Connected to: ", client.current_server_addr)
+    wait.clear()
 
 
 @client.on("disconnected")
@@ -38,7 +40,8 @@ def handle_disconnect():
     print("Disconnected.")
     if client.relogin_available:
         print("Trying to reconnect...")
-        client.reconnect(maxdelay=30, retry=3)
+        client.reconnect(maxdelay=60, retry=5)
+    wait.set()
 
 
 @client.on("reconnect")
@@ -58,7 +61,8 @@ def handle_error(result):
         config['login_key'] = ''
         save_config()
         client.login(username=username, password=password)
-    print("error occurred: ", repr(result))
+    if result == EResult.RateLimitExceeded:
+        print("error occurred: ", repr(result))
 
 
 @client.on('auth_code_required')
@@ -78,6 +82,13 @@ def loginkey(key):
         config['login_key'] = key.body.login_key
         save_config()
 
+@client.on(EMsg.ClientPlayingSessionState)
+def handle_play_session(msg):
+    if msg.body.playing_blocked:
+        playing_blocked.set()
+    else:
+        playing_blocked.clear()
+    wait.set()
 
 @client.on(EMsg.ClientPICSChangesSinceResponse)
 def changes(resp):
@@ -121,10 +132,29 @@ def add_game(appid):
     else:
         appids = [appid]
     client.request_free_license(appids)
-    client.games_played(appids)
-    print(client.current_games_played)
-    time.sleep(2)
-    print(client.current_games_played)
+    while True:
+        if not client.connected:
+            client.reconnect()
+            continue
+
+        if not client.logged_on and client.relogin_available:
+            result = client.relogin()
+            if result != EResult.OK:
+                print("Login failed: ", repr(EResult(result)))
+
+        if playing_blocked.is_set():
+            print("Another Steam session is playing right now. Waiting for it to finish...")
+            wait.wait(timeout=3600)
+            continue
+
+        wait.clear()
+        client.games_played(appids)
+        print(client.current_games_played)
+        playing_blocked.wait(timeout=1)
+        wait.wait(timeout=1)
+        client.games_played([])
+        print(client.current_games_played)
+        break
 
 
 def add_demo(appid):
@@ -205,7 +235,6 @@ if __name__ == '__main__':
             populate_dict()
             dump_event_dict()
         event_demos = set(filter(lambda y: y != 0, event_dict.values()))
-
         print(f"total apps: {len(event_dict)}\n"
               f"total demos: {len(event_demos)}")
 
@@ -223,6 +252,7 @@ if __name__ == '__main__':
 
         # try_all('event_demos.txt')
     except KeyboardInterrupt:
+        print('--------------keyboard interrupt: Exiting')
         if client.connected:
             client.logout()
         exit(0)
