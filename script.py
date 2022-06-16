@@ -100,7 +100,7 @@ def changes(resp):
     global change_number
     current_change = resp.body.current_change_number
     if current_change == change_number:
-        client.sleep(5)
+        client.sleep(3)
     else:
         change_number = current_change
         app_changes = resp.body.app_changes
@@ -135,7 +135,8 @@ def add_game(appid):
         appids = list(map(int, appid))
     else:
         appids = [appid]
-    client.request_free_license(appids)
+    license = client.request_free_license(appids)
+    print(license)
     while True:
         if not client.connected:
             client.reconnect()
@@ -155,8 +156,8 @@ def add_game(appid):
         wait.clear()
         client.games_played(appids)
         print(client.current_games_played)
-        playing_blocked.wait(timeout=1)
-        wait.wait(timeout=1)
+        playing_blocked.wait(timeout=.5)
+        wait.wait(timeout=.5)
         client.games_played([])
         print(client.current_games_played)
         break
@@ -235,11 +236,9 @@ def populate_dict():
     unknown = filter(lambda app: app not in event_dict or event_dict[app] == 0, event_apps)
     for i, app in enumerate(unknown):
         print(f" {i}/{missing - 1}", end='\r')
-        if app not in event_dict or event_dict[app] == 0:
-            event_dict[app] = 0
-            demo = check_event(app)
-            if demo:
-                add_demo(demo)
+        demo = check_event(app)
+        if demo:
+            add_demo(demo)
 
 
 if __name__ == '__main__':
