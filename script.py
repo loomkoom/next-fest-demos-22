@@ -24,7 +24,6 @@ def dump_event_dict():
 
 @client.on('logged_on')
 def logon():
-    client.wait_msg(EMsg.ClientAccountInfo)
     print("Logged on as: ", client.user.name)
     print('--------------------------------------')
 
@@ -64,7 +63,7 @@ def handle_error(result):
     if EResult == EResult.RateLimitExceeded:
         print("Login failed: Ratelimit - waiting 30 min")
         client.sleep(1850)
-        client.login(username=username, password=password,login_key=login_key)
+        client.login(username=username, password=password, login_key=login_key)
 
 
 @client.on('auth_code_required')
@@ -194,18 +193,32 @@ def check_event(parent_app):
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.136 Safari/537.36'
         }
         req = session.get(f'https://store.steampowered.com/saleaction/ajaxgetdemoevents?appids[]={parent_app}',
-                          headers=headers).json()
+                          headers=headers)
+        jsondata = req.json()
         time.sleep(.25)
-        if not req['success']:
+        if not req.ok or not jsondata['success']:
             print('error on ', parent_app)
-        elif len(req.keys()) > 1 and req['info'][0]['demo_appid'] != 0:
-            demo_appid = req['info'][0]['demo_appid']
+        elif len(jsondata.keys()) > 1 and jsondata['info'][0]['demo_appid'] != 0:
+            demo_appid = jsondata['info'][0]['demo_appid']
             event_dict[parent_app] = demo_appid
             if demo_appid not in event_demos:
                 event_demos.add(demo_appid)
-                print(req)
+                print(jsondata)
                 return demo_appid
         return False
+
+
+def fetch_event_apps():
+    req = requests.get(
+        'https://store.steampowered.com/events/ajaxgetpartnerevent?clan_accountid=39049601&announcement_gid=3337742851854054341&d={time.now()}')
+    if req.ok:
+        jsondata = json.loads(req.json()['event']['jsondata'])
+        new_apps = {x['capsule']['id'] for x in jsondata['tagged_items']}
+        print(f'{len(new_apps)} new event apps found')
+        with open("event_apps.txt", "a") as file:
+            file.writelines('\n'.join(map(str, new_apps)))
+        return new_apps
+    return
 
 
 def populate_dict():
@@ -224,8 +237,6 @@ def populate_dict():
             if demo:
                 add_demo(demo)
 
-    dump_event_dict()
-
 
 if __name__ == '__main__':
     try:
@@ -233,12 +244,13 @@ if __name__ == '__main__':
             event_apps = set(map(lambda x: int(x.strip()), file.readlines()))
         with open('event.json', 'r') as file:
             event_dict = json.load(file, object_hook=(lambda x: {int(k): v for k, v in x.items()}))
-        if len(event_apps) != event_dict.keys():
-            event_dict.update({app: 0 for app in set(event_dict.keys()).symmetric_difference(event_apps)})
-            event_demos = set(filter(lambda y: y != 0, event_dict.values()))
-            if len(sys.argv) > 0 and sys.argv[0] == 'rebuild':
-                populate_dict()
-            dump_event_dict()
+        new_event_apps = fetch_event_apps()
+        if new_event_apps is not None:
+            event_dict.update({app: 0 for app in set(new_event_apps).difference(set(event_dict.keys()))})
+        event_demos = set(filter(lambda y: y != 0, event_dict.values()))
+        if len(sys.argv) > 0 and sys.argv[0] == 'rebuild':
+            populate_dict()
+        dump_event_dict()
         event_demos = set(filter(lambda y: y != 0, event_dict.values()))
         print(f"total apps: {len(event_dict)}\n"
               f"total demos: {len(event_demos)}")
