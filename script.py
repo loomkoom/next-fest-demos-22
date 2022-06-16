@@ -214,7 +214,9 @@ def fetch_event_apps():
     if req.ok:
         jsondata = json.loads(req.json()['event']['jsondata'])
         new_apps = {x['capsule']['id'] for x in jsondata['tagged_items']}
-        print(f'{len(new_apps)} new event apps found')
+        diff = set(new_apps).difference(set(event_dict.keys()))
+        event_dict.update({app: 0 for app in diff})
+        print(f'{len(diff)} new event apps found')
         with open("event_apps.txt", "a") as file:
             file.writelines('\n'.join(map(str, new_apps)))
         return new_apps
@@ -244,9 +246,7 @@ if __name__ == '__main__':
             event_apps = set(map(lambda x: int(x.strip()), file.readlines()))
         with open('event.json', 'r') as file:
             event_dict = json.load(file, object_hook=(lambda x: {int(k): v for k, v in x.items()}))
-        new_event_apps = fetch_event_apps()
-        if new_event_apps is not None:
-            event_dict.update({app: 0 for app in set(new_event_apps).difference(set(event_dict.keys()))})
+        fetch_event_apps()
         event_demos = set(filter(lambda y: y != 0, event_dict.values()))
         if len(sys.argv) > 0 and sys.argv[0] == 'rebuild':
             populate_dict()
