@@ -1,9 +1,10 @@
 import json
+import sys
 import time
 
-import requests
 import gevent
-from steam.client import SteamClient,EMsg, EResult
+import requests
+from steam.client import SteamClient, EMsg, EResult
 
 client = SteamClient()
 client.set_credential_location(".")
@@ -82,6 +83,7 @@ def loginkey(key):
         config['login_key'] = key.body.login_key
         save_config()
 
+
 @client.on(EMsg.ClientPlayingSessionState)
 def handle_play_session(msg):
     if msg.body.playing_blocked:
@@ -89,6 +91,7 @@ def handle_play_session(msg):
     else:
         playing_blocked.clear()
     wait.set()
+
 
 @client.on(EMsg.ClientPICSChangesSinceResponse)
 def changes(resp):
@@ -232,7 +235,8 @@ if __name__ == '__main__':
         if len(event_apps) != event_dict.keys():
             event_dict.update({app: 0 for app in set(event_dict.keys()).symmetric_difference(event_apps)})
             event_demos = set(filter(lambda y: y != 0, event_dict.values()))
-            populate_dict()
+            if len(sys.argv) > 0 and sys.argv[0] == 'rebuild':
+                populate_dict()
             dump_event_dict()
         event_demos = set(filter(lambda y: y != 0, event_dict.values()))
         print(f"total apps: {len(event_dict)}\n"
