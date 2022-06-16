@@ -25,14 +25,12 @@ def dump_event_dict():
 
 @client.on('logged_on')
 def logon():
-    pass
-
-@client.on(EMsg.ClientAccountInfo)
-def logged_on(msg):
-    print(msg)
-    if client.logged_on:
-        print("Logged on as: ", client.user.name)
-        print('--------------------------------------')
+    @client.on(EMsg.ClientAccountInfo)
+    def logged_on(msg):
+        print(msg)
+        if client.logged_on:
+            print("Logged on as: ", client.user.name)
+            print('--------------------------------------')
 
 
 @client.on("connected")
