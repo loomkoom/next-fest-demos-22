@@ -10,6 +10,7 @@ client = SteamClient()
 client.set_credential_location(".")
 wait = gevent.event.Event()
 playing_blocked = gevent.event.Event()
+update = gevent.event.Event()
 
 
 def save_config():
@@ -24,10 +25,10 @@ def dump_event_dict():
 
 @client.on('logged_on')
 def logon():
-    time.sleep(1)
-    client.get_changes_since(change_number)
-    print("Logged on as: ", client.user.name)
-    print('--------------------------------------')
+    @client.on(EMsg.ClientAccountInfo)
+    def logged_on():
+        print("Logged on as: ", client.user.name)
+        print('--------------------------------------')
 
 
 @client.on("connected")
@@ -65,6 +66,7 @@ def handle_error(result):
     if EResult == EResult.RateLimitExceeded:
         print("Login failed: Ratelimit - waiting 30 min")
         time.sleep(1850)
+        client.login(username=username, password=password,login_key=login_key)
 
 
 @client.on('auth_code_required')
@@ -80,7 +82,7 @@ def auth_code_prompt(is_2fa, mismatch):
 @client.on(EMsg.ClientNewLoginKey)
 def loginkey(key):
     if key.body.login_key != config['login_key']:
-        print(key.body.login_key)
+        print('login key: ', key.body.login_key)
         config['login_key'] = key.body.login_key
         save_config()
 
@@ -99,12 +101,12 @@ def changes(resp):
     global change_number
     current_change = resp.body.current_change_number
     if current_change == change_number:
-        time.sleep(5)
-        client.get_changes_since(current_change)
+        update.clear()
     else:
         change_number = current_change
         app_changes = resp.body.app_changes
         if len(app_changes) > 0:
+            update.set()
             print('--------------------------------------')
             print('since: ', resp.body.since_change_number)
             print('current: ', change_number)
@@ -127,7 +129,8 @@ def changes(resp):
                     dump_event_dict()
         config['change_number'] = change_number
         save_config()
-        client.get_changes_since(current_change)
+    update.wait(timeout=5)
+    client.get_changes_since(current_change)
 
 
 def add_game(appid):
