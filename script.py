@@ -10,7 +10,6 @@ client = SteamClient()
 client.set_credential_location(".")
 wait = gevent.event.Event()
 playing_blocked = gevent.event.Event()
-update = gevent.event.Event()
 
 
 def save_config():
@@ -25,6 +24,7 @@ def dump_event_dict():
 
 @client.on('logged_on')
 def logon():
+    client.wait_msg(EMsg.ClientAccountInfo)
     print("Logged on as: ", client.user.name)
     print('--------------------------------------')
 
@@ -99,12 +99,11 @@ def changes(resp):
     global change_number
     current_change = resp.body.current_change_number
     if current_change == change_number:
-        update.clear()
+        client.sleep(5)
     else:
         change_number = current_change
         app_changes = resp.body.app_changes
         if len(app_changes) > 0:
-            update.set()
             print('--------------------------------------')
             print('since: ', resp.body.since_change_number)
             print('current: ', change_number)
@@ -127,7 +126,6 @@ def changes(resp):
                     dump_event_dict()
         config['change_number'] = change_number
         save_config()
-    update.wait(timeout=5)
     client.get_changes_since(current_change)
 
 
