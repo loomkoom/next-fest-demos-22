@@ -220,7 +220,7 @@ def fetch_event_apps():
         event_dict.update({app: 0 for app in diff})
         print(f'{len(diff)} new event apps found')
         with open("event_apps.txt", "a") as file:
-            file.writelines('\n'.join(map(str, new_apps)))
+            file.writelines('\n'.join(map(str, diff)))
         return new_apps
     return
 
