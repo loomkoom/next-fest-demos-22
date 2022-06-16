@@ -25,12 +25,8 @@ def dump_event_dict():
 
 @client.on('logged_on')
 def logon():
-    @client.on(EMsg.ClientAccountInfo)
-    def logged_on(msg):
-        print(msg)
-        if client.logged_on:
-            print("Logged on as: ", client.user.name)
-            print('--------------------------------------')
+    print("Logged on as: ", client.user.name)
+    print('--------------------------------------')
 
 
 @client.on("connected")
@@ -67,7 +63,7 @@ def handle_error(result):
         client.login(username=username, password=password)
     if EResult == EResult.RateLimitExceeded:
         print("Login failed: Ratelimit - waiting 30 min")
-        time.sleep(1850)
+        client.sleep(1850)
         client.login(username=username, password=password,login_key=login_key)
 
 
@@ -144,7 +140,7 @@ def add_game(appid):
     while True:
         if not client.connected:
             client.reconnect()
-            time.sleep(1)
+            client.sleep(1)
             continue
 
         if not client.logged_on and client.relogin_available:
@@ -259,6 +255,7 @@ if __name__ == '__main__':
             client.relogin()
         else:
             client.login(username=username, password=password, login_key=login_key)
+        client.get_changes_since(change_number)
         client.run_forever()
 
         # try_all('event_demos.txt')
