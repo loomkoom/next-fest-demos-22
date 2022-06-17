@@ -24,10 +24,11 @@ def dump_event_dict():
 
 @client.on('logged_on')
 def logon():
-    if  client.user.name is None:
+    if client.user.name is None:
         client.sleep(5)
     print("Logged on as: ", client.user.name)
     print('--------------------------------------')
+    client.get_changes_since(change_number)
 
 
 @client.on("connected")
@@ -105,7 +106,6 @@ def changes(resp):
         change_number = current_change
         app_changes = resp.body.app_changes
         if len(app_changes) > 0:
-            print('--------------------------------------')
             print('since: ', resp.body.since_change_number)
             print('current: ', change_number)
             # print(app_changes)
@@ -125,6 +125,7 @@ def changes(resp):
                     event_dict[parent] = appid
                     event_demos.add(appid)
                     dump_event_dict()
+            print('--------------------------------------')
         config['change_number'] = change_number
         save_config()
     client.get_changes_since(current_change)
@@ -266,8 +267,6 @@ if __name__ == '__main__':
             client.relogin()
         else:
             client.login(username=username, password=password, login_key=login_key)
-        client.wait_msg(EMsg.ClientLogon,timeout=3)
-        client.get_changes_since(change_number)
         client.run_forever()
 
         # try_all('event_demos.txt')
