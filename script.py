@@ -45,7 +45,7 @@ def logon():
     if client.user.name is None:
         LOG.debug("waiting for account info")
         client.sleep(5)
-    LOG.info("Logged on as: {client.user.name}")
+    LOG.info(f"Logged on as: {client.user.name}")
     LOG.info('--------------------------------------')
     client.get_changes_since(change_number)
 
