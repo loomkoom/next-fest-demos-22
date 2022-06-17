@@ -44,7 +44,7 @@ def dump_event_dict():
 def logon():
     if client.user.name is None:
         LOG.debug("waiting for account info")
-        client.wait_msg(EMsg.ClientAccountInfo,timeout=2)
+        client.wait_msg(EMsg.ClientAccountInfo, timeout=2)
     LOG.info(f"Logged on as: {client.user.name}")
     LOG.info('--------------------------------------')
     client.get_changes_since(change_number)
@@ -62,6 +62,15 @@ def handle_disconnect():
     if client.relogin_available:
         LOG.info("Trying to reconnect...")
         client.reconnect(maxdelay=60, retry=5)
+    wait.set()
+
+
+@client.on(EMsg.ClientLoggedOff)
+def handle_disconnect():
+    LOG.info("Logged off.")
+    if client.relogin_available:
+        LOG.info("Trying to re login...")
+        client.relogin()
     wait.set()
 
 
