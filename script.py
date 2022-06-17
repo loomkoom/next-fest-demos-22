@@ -102,7 +102,7 @@ def auth_code_prompt(is_2fa, mismatch):
 @client.on(EMsg.ClientNewLoginKey)
 def loginkey(key):
     if key.body.login_key != config['login_key']:
-        LOG.debug('login key: {key.body.login_key}')
+        LOG.debug(f'login key: {key.body.login_key}')
         config['login_key'] = key.body.login_key
         save_config()
 
@@ -126,8 +126,8 @@ def changes(resp):
         change_number = current_change
         app_changes = resp.body.app_changes
         if len(app_changes) > 0:
-            LOG.debug('since: {resp.body.since_change_number}')
-            LOG.debug('current: {change_number}')
+            LOG.debug(f'since: {resp.body.since_change_number}')
+            LOG.debug(f'current: {change_number}')
             # print(app_changes)
             appids = [app.appid for app in app_changes]
             ret = client.get_product_info(apps=appids, auto_access_tokens=True)
@@ -167,7 +167,7 @@ def add_game(appid):
         if not client.logged_on and client.relogin_available:
             result = client.relogin()
             if result != EResult.OK:
-                LOG.warning("Login failed: {repr(EResult(result))}")
+                LOG.warning(f"Login failed: {repr(EResult(result))}")
 
         if playing_blocked.is_set():
             LOG.warning("Another Steam session is playing right now. Waiting for it to finish...")
@@ -221,7 +221,7 @@ def check_event(parent_app):
         jsondata = req.json()
         time.sleep(.25)
         if not req.ok or not jsondata['success']:
-            LOG.debug('error on {parent_app}')
+            LOG.debug(f'error on {parent_app}')
         elif len(jsondata.keys()) > 1 and jsondata['info'][0]['demo_appid'] != 0:
             demo_appid = jsondata['info'][0]['demo_appid']
             event_dict[parent_app] = demo_appid
