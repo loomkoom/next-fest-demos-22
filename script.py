@@ -180,7 +180,7 @@ def add_game(appid):
 
         if playing_blocked.is_set():
             LOG.warning("Another Steam session is playing right now. Waiting for it to finish...")
-            wait.wait(timeout=3600)
+            wait.wait(timeout=300)
             continue
 
         wait.clear()
