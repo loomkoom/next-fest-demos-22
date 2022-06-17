@@ -25,6 +25,7 @@ def dump_event_dict():
 @client.on('logged_on')
 def logon():
     if client.user.name is None:
+        print("waiting for account info")
         client.sleep(5)
     print("Logged on as: ", client.user.name)
     print('--------------------------------------')
@@ -53,6 +54,7 @@ def handle_reconnect(delay):
 
 @client.on("channel_secured")
 def send_login():
+    print(f"Channel secured")
     if client.relogin_available:
         client.relogin()
 
