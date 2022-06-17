@@ -136,7 +136,7 @@ def changes(resp):
                 app = ret['apps'][appid]
                 try:
                     parent = int(app['extended']['demoofappid'])
-                    LOG.info(f" {app['common']['name']} - demo: {appid} - parent: {parent}")
+                    LOG.info(f" {app['common']['name']}\n - demo: {appid} - parent: {parent}")
                 except KeyError:
                     continue
 
