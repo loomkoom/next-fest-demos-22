@@ -266,6 +266,7 @@ if __name__ == '__main__':
             client.relogin()
         else:
             client.login(username=username, password=password, login_key=login_key)
+        client.wait_msg(EMsg.ClientLogon,timeout=3)
         client.get_changes_since(change_number)
         client.run_forever()
 
