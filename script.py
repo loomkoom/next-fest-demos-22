@@ -253,7 +253,7 @@ def fetch_event_apps():
                 new_apps.update(source2.json()['appids'])
                 i += 100
                 time.sleep(.5)
-            print(len(new_apps))
+    LOG.debug(f"{len(new_apps)} Parent apps found")
     diff = set(new_apps).difference(set(event_dict.keys()))
     event_dict.update({app: 0 for app in diff})
     LOG.info(f'{len(diff)} new event apps found')
@@ -299,10 +299,10 @@ if __name__ == '__main__':
         login_key = config['login_key']
         username = config['username']
         password = config['password']
-        # if client.relogin_available:
-        #     client.relogin()
-        # else:
-        #     client.login(username=username, password=password, login_key=login_key)
+        if client.relogin_available:
+            client.relogin()
+        else:
+            client.login(username=username, password=password, login_key=login_key)
         client.run_forever()
 
         # try_all('event_demos.txt')
