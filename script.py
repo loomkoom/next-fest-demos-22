@@ -1,4 +1,6 @@
 import json
+import logging
+import os
 import sys
 import time
 
@@ -6,6 +8,22 @@ import gevent
 import requests
 from steam.client import SteamClient, EMsg, EResult
 
+# LOGGING
+LOG = logging.getLogger(__name__)
+LOG.setLevel(logging.DEBUG)
+
+file_handler = logging.FileHandler(f'{os.getcwd()}/client.log', 'a', encoding='utf-8')
+formatter = logging.Formatter('[%(asctime)s : %(name)s]: %(message)s')
+file_handler.setLevel(logging.DEBUG)
+file_handler.setFormatter(formatter)
+
+stream_handler = logging.StreamHandler()
+stream_handler.setLevel(logging.INFO)
+
+LOG.addHandler(file_handler)
+LOG.addHandler(stream_handler)
+
+# INITIALIZE STEAM CLIENT
 client = SteamClient()
 client.set_credential_location(".")
 wait = gevent.event.Event()
@@ -25,36 +43,36 @@ def dump_event_dict():
 @client.on('logged_on')
 def logon():
     if client.user.name is None:
-        print("waiting for account info")
+        LOG.debug("waiting for account info")
         client.sleep(5)
-    print("Logged on as: ", client.user.name)
-    print('--------------------------------------')
+    LOG.info("Logged on as: {client.user.name}")
+    LOG.info('--------------------------------------')
     client.get_changes_since(change_number)
 
 
 @client.on("connected")
 def handle_connected():
-    print("Connected to: ", client.current_server_addr)
+    LOG.debug(f"Connected to: {client.current_server_addr}")
     wait.clear()
 
 
 @client.on("disconnected")
 def handle_disconnect():
-    print("Disconnected.")
+    LOG.info("Disconnected.")
     if client.relogin_available:
-        print("Trying to reconnect...")
+        LOG.info("Trying to reconnect...")
         client.reconnect(maxdelay=60, retry=5)
     wait.set()
 
 
 @client.on("reconnect")
 def handle_reconnect(delay):
-    print(f"Reconnect in {delay} ...")
+    LOG.debug(f"Reconnect in {delay} ...")
 
 
 @client.on("channel_secured")
 def send_login():
-    print(f"Channel secured")
+    LOG.debug(f"Channel secured")
     if client.relogin_available:
         client.relogin()
 
@@ -66,7 +84,7 @@ def handle_error(result):
         save_config()
         client.login(username=username, password=password)
     if EResult == EResult.RateLimitExceeded:
-        print("Login failed: Ratelimit - waiting 30 min")
+        LOG.warning("Login failed: Ratelimit - waiting 30 min")
         client.sleep(1850)
         client.login(username=username, password=password, login_key=login_key)
 
@@ -84,7 +102,7 @@ def auth_code_prompt(is_2fa, mismatch):
 @client.on(EMsg.ClientNewLoginKey)
 def loginkey(key):
     if key.body.login_key != config['login_key']:
-        print('login key: ', key.body.login_key)
+        LOG.debug('login key: {key.body.login_key}')
         config['login_key'] = key.body.login_key
         save_config()
 
@@ -108,8 +126,8 @@ def changes(resp):
         change_number = current_change
         app_changes = resp.body.app_changes
         if len(app_changes) > 0:
-            print('since: ', resp.body.since_change_number)
-            print('current: ', change_number)
+            LOG.debug('since: {resp.body.since_change_number}')
+            LOG.debug('current: {change_number}')
             # print(app_changes)
             appids = [app.appid for app in app_changes]
             ret = client.get_product_info(apps=appids, auto_access_tokens=True)
@@ -118,7 +136,7 @@ def changes(resp):
                 app = ret['apps'][appid]
                 try:
                     parent = int(app['extended']['demoofappid'])
-                    print(appid, app['common']['name'], parent)
+                    LOG.info(f" {app['common']['name']} - demo: {appid} - parent: {parent}")
                 except KeyError:
                     continue
 
@@ -127,7 +145,7 @@ def changes(resp):
                     event_dict[parent] = appid
                     event_demos.add(appid)
                     dump_event_dict()
-            print('--------------------------------------')
+            LOG.debug('--------------------------------------')
         config['change_number'] = change_number
         save_config()
     client.get_changes_since(current_change)
@@ -139,7 +157,7 @@ def add_game(appid):
     else:
         appids = [appid]
     license = client.request_free_license(appids)
-    print(license)
+    LOG.debug(license)
     while True:
         if not client.connected:
             client.reconnect()
@@ -149,20 +167,20 @@ def add_game(appid):
         if not client.logged_on and client.relogin_available:
             result = client.relogin()
             if result != EResult.OK:
-                print("Login failed: ", repr(EResult(result)))
+                LOG.warning("Login failed: {repr(EResult(result))}")
 
         if playing_blocked.is_set():
-            print("Another Steam session is playing right now. Waiting for it to finish...")
+            LOG.warning("Another Steam session is playing right now. Waiting for it to finish...")
             wait.wait(timeout=3600)
             continue
 
         wait.clear()
         client.games_played(appids)
-        print(client.current_games_played)
+        LOG.info(client.current_games_played)
         playing_blocked.wait(timeout=.5)
         wait.wait(timeout=.5)
         client.games_played([])
-        print(client.current_games_played)
+        LOG.debug(client.current_games_played)
         break
 
 
@@ -170,7 +188,7 @@ def add_demo(appid):
     with open('event_demos.txt', 'a', encoding='utf8') as file:
         file.write(f"{appid}\n")
     add_game(appid)
-    print(f"New demo: {appid}, total is now: {len(event_demos)}")
+    LOG.info(f"New demo: {appid}, total is now: {len(event_demos)}")
 
 
 def try_all(in_file):
@@ -180,7 +198,7 @@ def try_all(in_file):
 
     time.sleep(1)
     for i, batch in enumerate(demos[::-1]):
-        print(f"{i}/{len(demos) - 1}")
+        LOG.info(f"{i}/{len(demos) - 1}")
         add_game(batch)
 
 
@@ -203,39 +221,54 @@ def check_event(parent_app):
         jsondata = req.json()
         time.sleep(.25)
         if not req.ok or not jsondata['success']:
-            print('error on ', parent_app)
+            LOG.debug('error on {parent_app}')
         elif len(jsondata.keys()) > 1 and jsondata['info'][0]['demo_appid'] != 0:
             demo_appid = jsondata['info'][0]['demo_appid']
             event_dict[parent_app] = demo_appid
             if demo_appid not in event_demos:
                 event_demos.add(demo_appid)
-                print(jsondata)
+                LOG.debug(jsondata)
                 return demo_appid
         return False
 
 
 def fetch_event_apps():
-    req = requests.get(
+    source1 = requests.get(
         'https://store.steampowered.com/events/ajaxgetpartnerevent?clan_accountid=39049601&announcement_gid=3337742851854054341&d={time.now()}')
-    if req.ok:
-        jsondata = json.loads(req.json()['event']['jsondata'])
+    new_apps = set()
+    if source1.ok:
+        jsondata = json.loads(source1.json()['event']['jsondata'])
         new_apps = {x['capsule']['id'] for x in jsondata['tagged_items']}
-        diff = set(new_apps).difference(set(event_dict.keys()))
-        event_dict.update({app: 0 for app in diff})
-        print(f'{len(diff)} new event apps found')
-        with open("event_apps.txt", "a") as file:
-            file.writelines('\n'.join(map(str, diff)))
-        return new_apps
-    return
+        new_apps.update(x['id'] for x in jsondata['sale_sections'][0]['tabs'][0]['capsules'])
+    flavors = {"trendingwishlisted", "dailyactiveuserdemo", "topwishlisted", 'popularpurchased'}
+
+    for flavor in flavors:
+        source2 = requests.get(
+            f'https://store.steampowered.com/saleaction/ajaxgetsaledynamicappquery?cc=gb&l=en&clanAccountID=39049601&clanAnnouncementGID=3337742851854054341&start=0&count=100&flavor=popularpurchased')
+        if source2.ok:
+            i = 100
+            while source2.json()['possible_has_more']:
+                source2 = requests.get(
+                    f'https://store.steampowered.com/saleaction/ajaxgetsaledynamicappquery?cc=gb&l=en&clanAccountID=39049601&clanAnnouncementGID=3337742851854054341&start={i}&count=100&flavor={flavor}')
+                new_apps.update(source2.json()['appids'])
+                i += 100
+                time.sleep(.5)
+            print(len(new_apps))
+    diff = set(new_apps).difference(set(event_dict.keys()))
+    event_dict.update({app: 0 for app in diff})
+    LOG.info(f'{len(diff)} new event apps found')
+    with open("event_apps.txt", "a") as file:
+        file.writelines('\n'.join(map(str, diff)))
+    return diff
 
 
 def populate_dict():
     total = len(event_apps)
     missing = len(tuple(filter(lambda app: app not in event_dict or event_dict[app] == 0, event_apps)))
     known = len(tuple(filter(lambda x: x != 0, event_dict.values())))
-    print(f'total apps: {total}\n'
-          f'missing demos: {missing}\n'
-          f'known demos: {known}')
+    LOG.info(f'total apps: {total}\n'
+             f'missing demos: {missing}\n'
+             f'known demos: {known}')
     unknown = filter(lambda app: app not in event_dict or event_dict[app] == 0, event_apps)
     for i, app in enumerate(unknown):
         print(f" {i}/{missing - 1}", end='\r')
@@ -250,14 +283,15 @@ if __name__ == '__main__':
             event_apps = set(map(lambda x: int(x.strip()), file.readlines()))
         with open('event.json', 'r') as file:
             event_dict = json.load(file, object_hook=(lambda x: {int(k): v for k, v in x.items()}))
-        fetch_event_apps()
         event_demos = set(filter(lambda y: y != 0, event_dict.values()))
         if len(sys.argv) > 1 and sys.argv[1] == 'rebuild':
+            apps = fetch_event_apps()
+            if len(apps) > 0:
+                LOG.debug(f"new aps: {apps}")
             populate_dict()
         dump_event_dict()
         event_demos = set(filter(lambda y: y != 0, event_dict.values()))
-        print(f"total apps: {len(event_dict)}\n"
-              f"total demos: {len(event_demos)}")
+        LOG.info(f"total apps: {len(event_dict)}\ntotal demos: {len(event_demos)}")
 
         with open('config.json', 'r') as file:
             config = json.load(file)
@@ -265,15 +299,16 @@ if __name__ == '__main__':
         login_key = config['login_key']
         username = config['username']
         password = config['password']
-        if client.relogin_available:
-            client.relogin()
-        else:
-            client.login(username=username, password=password, login_key=login_key)
+        # if client.relogin_available:
+        #     client.relogin()
+        # else:
+        #     client.login(username=username, password=password, login_key=login_key)
         client.run_forever()
 
         # try_all('event_demos.txt')
     except KeyboardInterrupt:
-        print('--------------keyboard interrupt: Exiting')
+        LOG.info('--------------keyboard interrupt: Exiting')
         if client.connected:
+            client.sleep(1)
             client.logout()
         exit(0)
