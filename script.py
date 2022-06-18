@@ -25,8 +25,9 @@ LOG.addHandler(stream_handler)
 
 # INITIALIZE STEAM CLIENT
 client = SteamClient()
+client.verbose_debug = True
 client.set_credential_location(".")
-client.sleep(5)
+client.sleep(.5)
 wait = gevent.event.Event()
 playing_blocked = gevent.event.Event()
 
@@ -99,7 +100,7 @@ def handle_error(result):
         client.login(username=username, password=password)
     if EResult == EResult.RateLimitExceeded:
         LOG.warning("Login failed: Ratelimit - waiting 30 min")
-        client.sleep(1850)
+        time.sleep(1850)
         client.login(username=username, password=password, login_key=login_key)
 
 
