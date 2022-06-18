@@ -63,10 +63,10 @@ def handle_connected():
 @client.on("disconnected")
 def handle_disconnect():
     LOG.info("Disconnected.")
-    if client.relogin_available and not last_logon_result == EResult.RateLimitExceeded:
+    if client.relogin_available:
         LOG.info("Trying to reconnect...")
         client.reconnect(maxdelay=60, retry=5)
-    elif not client.logged_on and not last_logon_result == EResult.RateLimitExceeded:
+    elif not client.logged_on:
         client.login(username=username, password=password, login_key=login_key)
     wait.set()
 
@@ -74,8 +74,8 @@ def handle_disconnect():
 @client.on(EMsg.ClientLoggedOff)
 def handle_disconnect(msg):
     LOG.info("Logged off.")
-    LOG.info(msg)
-    if client.relogin_available and not last_logon_result == EResult.RateLimitExceeded:
+    LOG.info(msg.body.eresult)
+    if client.relogin_available and not client.logged_on:
         LOG.info("Trying to re login...")
         client.relogin()
     wait.set()
@@ -89,9 +89,6 @@ def handle_reconnect(delay):
 @client.on("channel_secured")
 def send_login():
     LOG.debug(f"Channel secured")
-    if client.relogin_available and not client.logged_on:
-        client.relogin()
-
 
 @client.on("error")
 def handle_error(result):
@@ -103,7 +100,7 @@ def handle_error(result):
         client.login(username=username, password=password)
     if result == EResult.RateLimitExceeded:
         LOG.warning("Login failed: Ratelimit - waiting 30 min")
-        client.sleep(1850)
+        time.sleep(1850)
         client.login(username=username, password=password, login_key=login_key)
 
 
@@ -136,6 +133,14 @@ def handle_play_session(msg):
         playing_blocked.clear()
     LOG.info(f"currently playing {msg.body.playing_app} - blocked: {msg.body.playing_blocked} ")
     wait.set()
+
+@client.on(EMsg.PICSBase)
+def msg(msg):
+    print(msg)
+
+@client.on(EMsg.ClientAppInfoChanges)
+def msg(msg):
+    print(msg)
 
 
 @client.on(EMsg.ClientPICSChangesSinceResponse)
