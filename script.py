@@ -30,6 +30,7 @@ client.set_credential_location(".")
 client.sleep(.5)
 wait = gevent.event.Event()
 playing_blocked = gevent.event.Event()
+last_logon_result = None
 
 
 def save_config():
@@ -62,10 +63,10 @@ def handle_connected():
 @client.on("disconnected")
 def handle_disconnect():
     LOG.info("Disconnected.")
-    if client.relogin_available:
+    if client.relogin_available and not last_logon_result == EResult.RateLimitExceeded:
         LOG.info("Trying to reconnect...")
         client.reconnect(maxdelay=60, retry=5)
-    elif not client.logged_on:
+    elif not client.logged_on and not last_logon_result == EResult.RateLimitExceeded:
         client.login(username=username, password=password, login_key=login_key)
     wait.set()
 
@@ -74,7 +75,7 @@ def handle_disconnect():
 def handle_disconnect(msg):
     LOG.info("Logged off.")
     LOG.info(msg)
-    if client.relogin_available:
+    if client.relogin_available and not last_logon_result == EResult.RateLimitExceeded:
         LOG.info("Trying to re login...")
         client.relogin()
     wait.set()
@@ -94,13 +95,15 @@ def send_login():
 
 @client.on("error")
 def handle_error(result):
+    global last_logon_result
+    last_logon_result = result
     if result == EResult.InvalidPassword:
         config['login_key'] = ''
         save_config()
         client.login(username=username, password=password)
-    if EResult == EResult.RateLimitExceeded:
+    if result == EResult.RateLimitExceeded:
         LOG.warning("Login failed: Ratelimit - waiting 30 min")
-        time.sleep(1850)
+        client.sleep(1850)
         client.login(username=username, password=password, login_key=login_key)
 
 
