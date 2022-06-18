@@ -131,7 +131,6 @@ def auth_code_prompt(is_2fa, mismatch):
             code = input("Enter 2FA Code: ")
         client.login(two_factor_code=code, username=username, password=password)
 
-
 @client.on(EMsg.ClientNewLoginKey)
 def loginkey(key):
     if key.body.login_key != config['login_key']:
