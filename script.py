@@ -23,16 +23,10 @@ stream_handler.setLevel(logging.INFO)
 LOG.addHandler(file_handler)
 LOG.addHandler(stream_handler)
 
-file_handler = logging.FileHandler(f'{os.getcwd()}/DEBUG.log', 'a', encoding='utf-8')
-formatter = logging.Formatter('[%(asctime)s : %(name)s]: %(message)s')
-file_handler.setLevel(logging.DEBUG)
-file_handler.setFormatter(formatter)
-DEBUG = logging.basicConfig(handlers=[file_handler])
-
 # INITIALIZE STEAM CLIENT
 client = SteamClient()
 client.verbose_debug = True
-client._LOG = logging.getLogger('debug')
+client._LOG = LOG
 client.set_credential_location(".")
 client.sleep(.5)
 wait = gevent.event.Event()
@@ -206,7 +200,7 @@ def add_game(appid):
     LOG.debug(license)
     while True:
         if not client.connected:
-            client.reconnect()
+            client.reconnect(maxdelay=30,retry=3)
             client.sleep(1)
             continue
 
