@@ -114,7 +114,7 @@ def handle_error(result):
         client.login(username=username, password=password)
     if result == EResult.RateLimitExceeded:
         LOG.warning("Login failed: Ratelimit - waiting 30 min")
-        time.sleep(1850)
+        client.sleep(1850)
         client.login(username=username, password=password, login_key=login_key)
     if result == EResult.PasswordRequiredToKickSession:
         LOG.info('You are already logged in elsewhere, this cached credential login has failed.')
