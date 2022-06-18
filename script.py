@@ -26,6 +26,7 @@ LOG.addHandler(stream_handler)
 # INITIALIZE STEAM CLIENT
 client = SteamClient()
 client.set_credential_location(".")
+client.sleep(5)
 wait = gevent.event.Event()
 playing_blocked = gevent.event.Event()
 
@@ -321,7 +322,6 @@ if __name__ == '__main__':
             client.relogin()
         else:
             client.login(username=username, password=password, login_key=login_key)
-        client.sleep(5)
         client.run_forever()
 
         # try_all('event_demos.txt')
