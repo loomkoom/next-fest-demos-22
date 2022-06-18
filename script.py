@@ -62,6 +62,8 @@ def handle_disconnect():
     if client.relogin_available:
         LOG.info("Trying to reconnect...")
         client.reconnect(maxdelay=60, retry=5)
+    else:
+        client.login(username=username, password=password, login_key=login_key)
     wait.set()
 
 
