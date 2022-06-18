@@ -47,7 +47,7 @@ def logon():
         client.wait_msg(EMsg.ClientAccountInfo, timeout=2)
     LOG.info(f"Logged on as: {client.user.name}")
     LOG.info('--------------------------------------')
-    client.get_changes_since(change_number)
+    client.get_changes_since(change_number-1)
 
 
 @client.on("connected")
