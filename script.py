@@ -86,7 +86,7 @@ def handle_reconnect(delay):
 @client.on("channel_secured")
 def send_login():
     LOG.debug(f"Channel secured")
-    if client.relogin_available:
+    if client.relogin_available and not client.logged_on:
         client.relogin()
 
 
