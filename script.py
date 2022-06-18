@@ -77,7 +77,7 @@ def handle_disconnect():
 
 
 @client.on(EMsg.ClientLoggedOff)
-def handle_disconnect(msg):
+def handle_logoff(msg):
     LOG.info("Logged off.")
     LOG.info(msg.body.eresult)
     if client.relogin_available and not client.logged_on:
