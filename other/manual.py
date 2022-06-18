@@ -4,11 +4,11 @@ import time
 import keyboard
 import requests
 
-with open("event_apps.txt", "r") as file:
+with open("../event_apps.txt", "r") as file:
     event_apps = list(map(lambda x: int(x.strip()), file.readlines()))
-with open("event_demos.txt", "r") as file:
+with open("../event_demos.txt", "r") as file:
     event_demos = list(map(lambda x: int(x.strip()), file.readlines()))
-with open('event.json', 'r') as file:
+with open('../event.json', 'r') as file:
     event_dict = json.load(file, object_hook=(lambda x: {int(k): v for k, v in x.items()}))
 
 
@@ -69,7 +69,7 @@ def check_event(parent_app):
 
 def add_demo(appid):
     event_demos.append(appid)
-    with open('event_demos.txt', 'a', encoding='utf8') as file:
+    with open('../event_demos.txt', 'a', encoding='utf8') as file:
         file.write(f"{appid}\n")
     add_game(appid)
     print(len(event_demos))
@@ -89,7 +89,7 @@ def loop(delay):
                 if demo:
                     add_demo(demo)
 
-        with open('event.json', 'w') as file:
+        with open('../event.json', 'w') as file:
             json.dump(event_dict, file)
         print(f'rechecking in {delay // 60} min')
         time.sleep(delay)
