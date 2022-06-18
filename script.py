@@ -321,6 +321,7 @@ if __name__ == '__main__':
             client.relogin()
         else:
             client.login(username=username, password=password, login_key=login_key)
+        client.sleep(5)
         client.run_forever()
 
         # try_all('event_demos.txt')
