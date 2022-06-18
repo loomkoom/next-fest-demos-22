@@ -125,6 +125,7 @@ def handle_play_session(msg):
     else:
         LOG.debug("\t not blocked")
         playing_blocked.clear()
+    LOG.info(f"currently playing {msg.body.playing_app}")
     wait.set()
 
 
@@ -181,6 +182,7 @@ def add_game(appid):
             if result != EResult.OK:
                 LOG.warning(f"Login failed: {repr(EResult(result))}")
 
+        wait.clear()
         if playing_blocked.is_set():
             LOG.warning("Another Steam session is playing right now. Waiting for it to finish...")
             wait.wait(timeout=300)
