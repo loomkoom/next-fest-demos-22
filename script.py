@@ -125,7 +125,7 @@ def handle_play_session(msg):
     else:
         LOG.debug("\t not blocked")
         playing_blocked.clear()
-    LOG.info(f"currently playing {msg.body.playing_app}")
+    LOG.info(f"currently playing {msg.body.playing_app} - blocked: {msg.body.playing_blocked} ")
     wait.set()
 
 
