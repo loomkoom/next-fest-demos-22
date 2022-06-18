@@ -95,6 +95,7 @@ def send_login():
 
 @client.on("error")
 def handle_error(result):
+    LOG.debug(result)
     global last_logon_result
     last_logon_result = result
     if result == EResult.InvalidPassword:
@@ -105,6 +106,8 @@ def handle_error(result):
         LOG.warning("Login failed: Ratelimit - waiting 30 min")
         time.sleep(1850)
         client.login(username=username, password=password, login_key=login_key)
+    if result == EResult.PasswordRequiredToKickSession:
+        LOG.info('You are already logged in elsewhere, this cached credential login has failed.')
 
 
 @client.on('auth_code_required')
@@ -137,9 +140,11 @@ def handle_play_session(msg):
     LOG.info(f"currently playing {msg.body.playing_app} - blocked: {msg.body.playing_blocked} ")
     wait.set()
 
+
 @client.on(EMsg.PICSBase)
 def msg(msg):
     print(msg)
+
 
 @client.on(EMsg.ClientAppInfoChanges)
 def msg(msg):
@@ -151,7 +156,7 @@ def changes(resp):
     global change_number
     current_change = resp.body.current_change_number
     if current_change == change_number:
-        client.sleep(2)
+        client.sleep(1)
     else:
         change_number = current_change
         app_changes = resp.body.app_changes
