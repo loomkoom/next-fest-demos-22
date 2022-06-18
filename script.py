@@ -26,6 +26,7 @@ LOG.addHandler(stream_handler)
 # INITIALIZE STEAM CLIENT
 client = SteamClient()
 client.verbose_debug = True
+client._LOG = LOG
 client.set_credential_location(".")
 client.sleep(.5)
 wait = gevent.event.Event()
@@ -65,7 +66,7 @@ def handle_disconnect():
     LOG.info("Disconnected.")
     if client.relogin_available:
         LOG.info("Trying to reconnect...")
-        client.reconnect(maxdelay=60, retry=5)
+        client.reconnect(maxdelay=60, retry=3)
     elif not client.logged_on:
         client.login(username=username, password=password, login_key=login_key)
     wait.set()
@@ -108,16 +109,19 @@ def handle_error(result):
         client.login(username=username, password=password, login_key=login_key)
     if result == EResult.PasswordRequiredToKickSession:
         LOG.info('You are already logged in elsewhere, this cached credential login has failed.')
+    if result in (EResult.TryAnotherCM, EResult.ServiceUnavailable):
+        LOG.info('Steam is possibly down')
 
 
 @client.on('auth_code_required')
 def auth_code_prompt(is_2fa, mismatch):
     if is_2fa:
-        code = input("Enter 2FA Code: ")
+        if mismatch:
+            code = input("Incorrect code. Enter 2FA code: ")
+        else:
+            code = input("Enter 2FA Code: ")
         client.login(two_factor_code=code, username=username, password=password)
-    else:
-        code = input("Enter Email Code: ")
-        client.login(auth_code=code, username=username, password=password)
+
 
 
 @client.on(EMsg.ClientNewLoginKey)
