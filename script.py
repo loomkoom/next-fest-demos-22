@@ -47,7 +47,7 @@ def dump_event_dict():
 @client.on('logged_on')
 def logon():
     if client.user.name is None:
-        LOG.debug("waiting for account info")
+        LOG.info("waiting for account info")
         client.wait_msg(EMsg.ClientAccountInfo, timeout=2)
     else:
         LOG.info(f"Logged on as: {client.user.name}")
@@ -82,7 +82,7 @@ def handle_logoff(msg):
 
 @client.on("reconnect")
 def handle_reconnect(delay):
-    LOG.debug(f"Reconnect in {delay} ...")
+    LOG.info(f"Reconnect in {delay} ...")
 
 
 @client.on("channel_secured")
@@ -294,7 +294,7 @@ def fetch_event_apps():
                 new_apps.update(source2.json()['appids'])
                 i += 100
                 time.sleep(.5)
-    LOG.debug(f"{len(new_apps)} Parent apps found")
+    LOG.info(f"{len(new_apps)} Parent apps found")
     diff = set(new_apps).difference(set(event_dict.keys()))
     event_dict.update({app: 0 for app in diff})
     LOG.info(f'{len(diff)} new event apps found')
@@ -328,7 +328,7 @@ if __name__ == '__main__':
         if len(sys.argv) > 1 and sys.argv[1] == 'rebuild':
             apps = fetch_event_apps()
             if len(apps) > 0:
-                LOG.debug(f"new aps: {apps}")
+                LOG.info(f"new aps: {apps}")
             populate_dict()
         dump_event_dict()
         event_demos = set(filter(lambda y: y != 0, event_dict.values()))
