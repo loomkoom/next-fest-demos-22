@@ -118,9 +118,12 @@ def loginkey(key):
 
 @client.on(EMsg.ClientPlayingSessionState)
 def handle_play_session(msg):
+    LOG.debug("Playing session changed")
     if msg.body.playing_blocked:
+        LOG.debug("\t currently blocked")
         playing_blocked.set()
     else:
+        LOG.debug("\t not blocked")
         playing_blocked.clear()
     wait.set()
 
