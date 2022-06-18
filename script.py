@@ -139,7 +139,7 @@ def changes(resp):
     global change_number
     current_change = resp.body.current_change_number
     if current_change == change_number:
-        client.sleep(1)
+        client.sleep(2)
     else:
         change_number = current_change
         app_changes = resp.body.app_changes
