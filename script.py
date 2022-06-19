@@ -12,7 +12,7 @@ from steam.client import SteamClient, EMsg, EResult
 LOG = logging.getLogger(__name__)
 LOG.setLevel(logging.DEBUG)
 
-file_handler = logging.FileHandler(f'{os.getcwd()}/client.log', 'a', encoding='utf-8')
+file_handler = logging.FileHandler(f'{os.getcwd()}/logs/client-{time.now()}.log', 'a', encoding='utf-8')
 formatter = logging.Formatter('[%(asctime)s : %(name)s]: %(message)s')
 file_handler.setLevel(logging.DEBUG)
 file_handler.setFormatter(formatter)
